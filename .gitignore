@@ -9,3 +9,7 @@ pom.xml
 /target
 /.lein-repl-history
 /.nrepl-port
+
+# IntelliJ
+.idea
+*iml
