@@ -4,6 +4,7 @@
             [compojure.route :as route]
             [clojure.java.io :as io]
             [ring.adapter.jetty :as jetty]
+            [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
             [environ.core :refer [env]]))
 
 (defn splash []
@@ -11,11 +12,14 @@
    :headers {"Content-Type" "text/plain"}
    :body "Hello from Heroku"})
 
-(defroutes app
+(defroutes app-routes
   (GET "/" []
        (splash))
   (ANY "*" []
        (route/not-found (slurp (io/resource "404.html")))))
+
+(def app
+  (wrap-defaults app-routes site-defaults))
 
 (defn -main [& [port]]
   (let [port (Integer. (or port (env :port) 5000))]
