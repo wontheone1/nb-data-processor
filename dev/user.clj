@@ -1,4 +1,1 @@
- (ns user)
-
- (defn hello []
-   "Hello world")
+(ns user)
