@@ -1,6 +1,8 @@
 (ns nb-mart.csv
   (:require [clojure.data.csv :as csv]
-            [clojure.string :refer [blank?]]))
+            [clojure.string :refer [blank?]]
+            [clojure.java.io :as io])
+  (:import (java.io File)))
 
 (defn read-csv-without-bom [file-path]
   "If Byte order mark (BOM) is the first char in the file,
@@ -10,6 +12,18 @@
     (if (.startsWith file-content bom)
       (csv/read-csv (.substring file-content 1) :separator \;)
       (csv/read-csv file-content :separator \;))))
+(defn create-temp-file! [prefix suffix]
+  (let [file (doto (File/createTempFile prefix suffix)
+               .deleteOnExit)]
+    ; TODO: log file path
+    (.getCanonicalPath file)))
+(defn write-processed-data-to-file! [processed-data]
+  (let [temp-file-path (create-temp-file! "nb-" ".csv")
+        bom            "\uFEFF"]
+    (with-open [out-file (io/writer temp-file-path)]
+      (.write out-file bom)
+      (csv/write-csv out-file processed-data :separator \;))
+    temp-file-path))
 
 ;; To map models and partners
 (defn read-model->partner [file-path]
@@ -46,6 +60,10 @@
           partner-name (model->partner model-name)]
       (concat [partner-name] a-row))))
 (defn process-sabang-data [sabang-data-file-path model-partner-file-path]
+  "Process data from sabangnet, write to a file, return the file path"
   (let [model->partner (read-model->partner model-partner-file-path)
         sabang-data    (insert-model-names-from-csv-file sabang-data-file-path)]
     (insert-partner-names sabang-data model->partner)))
+(defn generate-processed-csv [sabang-data-file-path model-partner-file-path]
+  (-> (process-sabang-data sabang-data-file-path model-partner-file-path)
+      (write-processed-data-to-file!)))
