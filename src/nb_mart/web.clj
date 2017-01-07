@@ -18,9 +18,12 @@
 (def app
   (wrap-defaults app-routes site-defaults))
 
-
 (def reloadable-app
-  (wrap-reload app))
+  (try (wrap-reload app)
+       (catch Exception e
+         (println e)
+         {:status 500
+          :body   (slurp (io/resource "500.html"))})))
 
 (defn -main [& [port]]
   (let [port (Integer. (or port (env :port) 5000))]
