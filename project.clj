@@ -7,7 +7,8 @@
                  [compojure "1.5.1"]
                  [ring "1.5.0"]
                  [environ "1.0.0"]
-                 [ring/ring-defaults "0.2.1"]]
+                 [ring/ring-defaults "0.2.1"]
+                 [org.clojure/data.csv "0.1.3"]]
   :ring {:handler clojure-getting-started.web/app}
   :min-lein-version "2.0.0"
   :plugins [[environ/environ.lein "0.3.1"]
