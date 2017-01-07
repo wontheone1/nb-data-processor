@@ -17,4 +17,5 @@
   :profiles {:production {:env {:production true}}
              :dev        {:dependencies [[ring/ring-mock "0.3.0"]
                                          [midje "1.8.3" :exclusions [org.clojure/clojure]]]
-                          :plugins      [[lein-midje "3.2.1"]]}})
+                          :plugins      [[lein-midje "3.2.1"]]
+                          :repl-options {:init-ns user}}})

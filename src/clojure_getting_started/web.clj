@@ -5,6 +5,7 @@
             [clojure.java.io :as io]
             [ring.adapter.jetty :as jetty]
             [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
+            [ring.middleware.reload :refer [wrap-reload]]
             [environ.core :refer [env]]))
 
 (defn splash []
@@ -21,9 +22,13 @@
 (def app
   (wrap-defaults app-routes site-defaults))
 
+
+(def reloadable-app
+  (wrap-reload app))
+
 (defn -main [& [port]]
   (let [port (Integer. (or port (env :port) 5000))]
-    (jetty/run-jetty (site #'app) {:port port :join? false})))
+    (jetty/run-jetty (site #'reloadable-app) {:port port :join? false})))
 
 ;; For interactive development:
 ;; (.stop server)
