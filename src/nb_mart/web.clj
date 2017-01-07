@@ -9,16 +9,11 @@
             [environ.core :refer [env]]
             [clojure.data.csv :as csv]))
 
-(defn splash []
-  {:status 200
-   :headers {"Content-Type" "text/plain"}
-   :body "Hello from Heroku"})
-
 (defroutes app-routes
-  (GET "/" []
-       (splash))
-  (ANY "*" []
-       (route/not-found (slurp (io/resource "404.html")))))
+           (GET "/" []
+             (slurp (io/resource "index.html")))
+           (ANY "*" []
+             (route/not-found (slurp (io/resource "404.html")))))
 
 (def app
   (wrap-defaults app-routes site-defaults))
