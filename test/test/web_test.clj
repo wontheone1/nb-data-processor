@@ -1,7 +1,7 @@
-(ns clojure-getting-started.web-test
+(ns test.web-test
   (:require [clojure.test :refer :all]
             [ring.mock.request :as mock]
-            [clojure-getting-started.web :refer :all]))
+            [nb-mart.web :refer :all]))
 
 (deftest first-test
   (is (= (:status (app (mock/request :get "/foo/bar")))
