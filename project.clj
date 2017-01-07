@@ -9,7 +9,7 @@
                  [environ "1.0.0"]
                  [ring/ring-defaults "0.2.1"]
                  [org.clojure/data.csv "0.1.3"]]
-  :ring {:handler clojure-getting-started.web/app}
+  :ring {:handler nb-mart.web/app}
   :min-lein-version "2.0.0"
   :plugins [[environ/environ.lein "0.3.1"]
             [lein-ring "0.9.7"]]
@@ -26,6 +26,7 @@
                           :plugins      [[lein-midje "3.2.1"]]
                           :repl-options {:init-ns user
                                          :init    (do (println "here we are in" *ns*)
-                                                      (use 'clojure-getting-started.web))}
+                                                      (use 'nb-mart.web)
+                                                      (use 'nb-mart.csv))}
                           :source-paths ["dev"]
                           }})
