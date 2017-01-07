@@ -15,7 +15,7 @@
   (fact
     "read ';' separated csv file and turns it into a map,
     check if it has expected data structure"
-    (csv/read-model->partner "test/model_and_partners.csv")
+    (csv/read-model->partner "test/mtop.csv")
     => (every-checker #(= (% "(사은품)10만원이상") "(사은품)10만원이상구매")
                       #(= (% "12MK1098W") "가림텍스")))
   (fact
@@ -24,4 +24,8 @@
     except the first"
     (rest (csv/insert-model-names-from-csv-file "test/sabang.csv"))
     => (has every? #(or (re-find csv/eng-and-num-matcher (% 0))
-                        (re-matches csv/freebies-matcher (% 0))))))
+                        (re-matches csv/freebies-matcher (% 0)))))
+  (fact
+    "After inserting partner names, there are 12 columns for each row"
+    (csv/process-sabang-data "test/sabang.csv" "test/mtop.csv")
+    => (has every? #(= (count %) 12))))

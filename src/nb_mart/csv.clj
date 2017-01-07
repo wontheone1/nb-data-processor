@@ -11,14 +11,24 @@
       (csv/read-csv (.substring file-content 1) :separator \;)
       (csv/read-csv file-content :separator \;))))
 
+;; To map models and partners
+(defn read-model->partner [file-path]
+  "Returns a map whose key is model names and value is partner names"
+  (let [vectors-of-model->patner (read-csv-without-bom file-path)]
+    (reduce #(into %1 {(%2 0) (%2 1)}) {} vectors-of-model->patner)))
+
 ;; To deal with Sabangnet download
 (def freebies-matcher #".*사은품.*")
 (def eng-and-num-matcher #"[a-zA-Z]+[0-9]+")
 (defn string->model-name [string]
   "Returns model name that is of english and then numbers,
-  if not found '(사은품)?만원이상 구매' is the model name"
+  if not found '(사은품)?만원이상' is the model name.
+  The split is there to cutoff the part after space(' gumae'"
   (or (re-find eng-and-num-matcher string)
-      (re-matches freebies-matcher string)))
+      (if-let [match-string (re-matches freebies-matcher string)]
+        (-> match-string
+            (.split " ")
+            first))))
 (defn row->model-name [vec-string]
   (some string->model-name vec-string))
 (defn insert-model-names-from-csv-file [csv-file-path]
@@ -28,9 +38,14 @@
       (if (blank? (a-row 0))
         (assoc a-row 0 (row->model-name a-row))
         a-row))))
-
-;; To map models and partners
-(defn read-model->partner [file-path]
-  "Returns a map whose key is model names and value is partner names"
-  (let [vectors-of-model->patner (read-csv-without-bom file-path)]
-    (reduce #(into %1 {(%2 0) (%2 1)}) {} vectors-of-model->patner)))
+(defn insert-partner-names [sabang-net-data model->partner]
+  "Decide partner names based on model names,
+  insert the partner names in the first column"
+  (for [a-row sabang-net-data]
+    (let [model-name (a-row 0)
+          partner-name (model->partner model-name)]
+      (concat [partner-name] a-row))))
+(defn process-sabang-data [sabang-data-file-path model-partner-file-path]
+  (let [model->partner (read-model->partner model-partner-file-path)
+        sabang-data    (insert-model-names-from-csv-file sabang-data-file-path)]
+    (insert-partner-names sabang-data model->partner)))
