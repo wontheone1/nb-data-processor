@@ -38,17 +38,17 @@
     (reduce #(into %1 {(%2 0) (%2 1)}) {} vectors-of-model->patner)))
 
 ;; To deal with Sabangnet download
-(def freebies-matcher #".*사은품.*")
-(def eng-and-num-matcher #"[a-zA-Z]+[0-9]+")
+(def freebies-matcher #".*\(사은품\).*")
+(def eng-and-num-matcher #"[a-zA-Z]+[0-9]+\w*")
 (defn string->model-name [string]
   "Returns model name that is of english and then numbers,
   if not found '(사은품)?만원이상' is the model name.
   The split is there to cutoff the part after space(' gumae'"
-  (or (re-find eng-and-num-matcher string)
-      (if-let [match-string (re-matches freebies-matcher string)]
+  (or (if-let [match-string (re-matches freebies-matcher string)]
         (-> match-string
             (.split " ")
-            first))))
+            first))
+      (re-find eng-and-num-matcher string)))
 (defn row->model-name [vec-string]
   (some string->model-name vec-string))
 (defn insert-model-names-from-csv-file [csv-file-path]
