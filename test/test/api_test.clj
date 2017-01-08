@@ -11,6 +11,23 @@
   (web/app (mock/request :get "/")) => (contains {:status 200}))
 
 (facts
+  "Util functions test"
+  (fact
+    (csv/vec-insert ["03/31-11" "CDAABFAH03AS85" "첨이스윗가든미디팬티2매 [85]" "5" "6 873" "34 364" "3 436" "37 800" "주식회사제이앤와이스타일"]
+                    1
+                    "")
+    => ["03/31-11" "" "CDAABFAH03AS85" "첨이스윗가든미디팬티2매 [85]" "5" "6 873" "34 364" "3 436" "37 800" "주식회사제이앤와이스타일"]))
+
+(facts
+  (let [standard-names (csv/read-standard-model-names "test/mtop.csv")]
+    (fact
+      (csv/lookup-standard-name standard-names "JHWPQ512AS100")
+      => "JHWPQ512")
+    (fact
+      (csv/lookup-standard-name standard-names "첨이스윗가든미디팬티2매 [85]")
+      => nil)))
+
+(facts
   "csv name space related facts"
   (fact
     (csv/normalize-multi-model-name "LG8007A/LG8007P")
@@ -18,6 +35,10 @@
   (fact
     (csv/normalize-multi-model-name "BYR9855/9865/9900/9899")
     => '("BYR9855" "BYR9865" "BYR9900" "BYR9899"))
+  (fact
+    (csv/insert-standardized-model-names "test/mtop.csv" "test/wholesale.csv")
+    => (contains ['("03/02-1" "BYL7739" "BYL7739CL100" "BYL7739센스레이스22호 [100]"
+                     "1" "11 318" "11 318" "1 132" "12 450" "이두레")]))
   (fact
     "read ';' separated csv file and turns it into a map,
     check if it has expected data structure"

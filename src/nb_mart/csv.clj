@@ -8,7 +8,7 @@
 (defn vec-insert
   "insert elem in coll at pos"
   [coll pos elem]
-  (vec (conj (subvec coll 0 pos) elem (subvec coll (inc pos)))))
+  (concat (subvec coll 0 pos) [elem] (subvec coll pos)))
 (defn read-csv-without-bom [file-path]
   "If Byte order mark (BOM) is the first char in the file,
   take the rest of the string except BOM"
@@ -62,7 +62,7 @@
          (apply concat)
          (sort-by count >))))
 (defn lookup-standard-name [standard-names non-standard-name]
-  )
+  (some #(if (.startsWith non-standard-name %) %) standard-names))
 (defn insert-standardized-model-names [model-file-path whole-sale-order-file-path]
   (let [whole-sale-data (read-csv-without-bom whole-sale-order-file-path)]
     (for [a-row whole-sale-data]
@@ -70,7 +70,7 @@
             standard-names    (read-standard-model-names model-file-path)
             standard-name     (lookup-standard-name standard-names non-standard-name)]
         (if (blank? standard-name)
-          a-row
+          (vec-insert a-row 1 "")
           (vec-insert a-row 1 standard-name))))))
 
 ;; To deal with Sabangnet download
