@@ -1,6 +1,6 @@
 (ns nb-mart.csv
   (:require [clojure.data.csv :as csv]
-            [clojure.string :refer [blank?]]
+            [clojure.string :refer [blank? starts-with? split]]
             [clojure.java.io :as io])
   (:import (java.io File)))
 
@@ -43,10 +43,23 @@
     (reduce #(into %1 {(%2 0) (%2 1)}) {} vectors-of-model->patner)))
 
 ;; To standardize unstandardized names in wholesale order file(도매전화주문)
+(defn normalize-multi-model-name [multi-model-name]
+  "E.g. 'BYR9855/9865/9900/9899' => ['BYR9855' 'BYR9865' 'BYR9900' 'BYR9899']
+  'LG8007A/LG8007P' => ['LG8007A' 'LG8007P']"
+  (let [names-array       (split multi-model-name #"/")
+        first-model-name  (first names-array)
+        first-eng-part    (first (split first-model-name #"\d+"))
+        names-from-second (rest names-array)]
+    (cons first-model-name
+          (for [name names-from-second]
+            (if (re-find #"^[\d]+" name)
+              (str first-eng-part name)
+              name)))))
 (defn read-standard-model-names [model-file-path]
   "Returns a map whose key is model names and value is partner names"
   (let [vectors-of-model->patner (read-csv-without-bom model-file-path)]
-    (->> (map #(% 0) vectors-of-model->patner)
+    (->> (map #(normalize-multi-model-name (% 0)) vectors-of-model->patner)
+         (apply concat)
          (sort-by count >))))
 (defn lookup-standard-name [standard-names non-standard-name]
   )
@@ -69,7 +82,7 @@
   The split is there to cutoff the part after space('구매' part)"
   (or (if-let [match-string (re-matches freebies-matcher string)]
         (-> match-string
-            (.split " ")
+            (split #" ")
             first))
       (-> (re-find model-name-matcher string)
           first)))

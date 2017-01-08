@@ -13,6 +13,12 @@
 (facts
   "csv name space related facts"
   (fact
+    (csv/normalize-multi-model-name "LG8007A/LG8007P")
+    => '("LG8007A" "LG8007P"))
+  (fact
+    (csv/normalize-multi-model-name "BYR9855/9865/9900/9899")
+    => '("BYR9855" "BYR9865" "BYR9900" "BYR9899"))
+  (fact
     "read ';' separated csv file and turns it into a map,
     check if it has expected data structure"
     (csv/read-model->partner "test/mtop.csv")
