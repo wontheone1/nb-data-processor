@@ -4,6 +4,11 @@
             [clojure.java.io :as io])
   (:import (java.io File)))
 
+;; Util functions
+(defn vec-insert
+  "insert elem in coll at pos"
+  [coll pos elem]
+  (vec (conj (subvec coll 0 pos) elem (subvec coll (inc pos)))))
 (defn read-csv-without-bom [file-path]
   "If Byte order mark (BOM) is the first char in the file,
   take the rest of the string except BOM"
@@ -32,10 +37,28 @@
       (io/file temp-file-path))))
 
 ;; To map models and partners
-(defn read-model->partner [file-path]
+(defn read-model->partner [model-file-path]
   "Returns a map whose key is model names and value is partner names"
-  (let [vectors-of-model->patner (read-csv-without-bom file-path)]
+  (let [vectors-of-model->patner (read-csv-without-bom model-file-path)]
     (reduce #(into %1 {(%2 0) (%2 1)}) {} vectors-of-model->patner)))
+
+;; To standardize unstandardized names in wholesale order file(도매전화주문)
+(defn read-standard-model-names [model-file-path]
+  "Returns a map whose key is model names and value is partner names"
+  (let [vectors-of-model->patner (read-csv-without-bom model-file-path)]
+    (->> (map #(% 0) vectors-of-model->patner)
+         (sort-by count >))))
+(defn lookup-standard-name [standard-names non-standard-name]
+  )
+(defn insert-standardized-model-names [model-file-path whole-sale-order-file-path]
+  (let [whole-sale-data (read-csv-without-bom whole-sale-order-file-path)]
+    (for [a-row whole-sale-data]
+      (let [non-standard-name (a-row 1)
+            standard-names    (read-standard-model-names model-file-path)
+            standard-name     (lookup-standard-name standard-names non-standard-name)]
+        (if (blank? standard-name)
+          a-row
+          (vec-insert a-row 1 standard-name))))))
 
 ;; To deal with Sabangnet download
 (def freebies-matcher #".*\(사은품\).*")
@@ -52,9 +75,9 @@
           first)))
 (defn row->model-name [vec-string]
   (some string->model-name vec-string))
-(defn insert-model-names-from-csv-file [csv-file-path]
+(defn insert-model-names-from-csv-file [sabang-file-path]
   "Returns a lazy sequence of vectors with model names as the first element"
-  (let [sabang-net-data (read-csv-without-bom csv-file-path)]
+  (let [sabang-net-data (read-csv-without-bom sabang-file-path)]
     (for [a-row sabang-net-data]
       (if (blank? (a-row 0))
         (assoc a-row 0 (row->model-name a-row))
