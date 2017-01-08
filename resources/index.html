@@ -27,7 +27,7 @@
     <p> 아래 두개의 첨부파일 선택버튼을 이용해 모델 파일과 사방넷 파일을 각각 선택한다.
         파일 크기 제한은 대략 3Mb임. 한도를 늘려야할 필요가 있다면 연락바람.
     </p>
-    <form action="/data"
+    <form action="/sabang"
           enctype="multipart/form-data" method="post">
         <p>
             모델 파일을 고르시오:<br>
@@ -47,6 +47,23 @@
     <h3> Step 3 </h3>
     <p> 제공되는 파일을 다운로드 한다.(UTF-8으로 인코딩된 .csv 형태임) 엑셀로 열면 문제 없이 열리게 되어있음. </p>
 
-    <h1> TODO 모델명 표준화하기 기능 (아직 미구현)</h1>
+    <h1> 도매주문자료 모델명 표준화 </h1>
+    <p> 도매전화주문 자료와 모델파일을 고른 후 전송버튼을 누름. 모든 주의사항 위와 동일.</p>
+    <p> 데이터의 크기에 따라 굉장히 오래 걸릴 수 있음. 13인치 맥북프로 로컬호스트 기준으로
+        2-3분 정도가 걸렸음. (도매전화주문파일 6000+행, 모델 및 거래처자료 8000+행 기준)</p>
+    <form action="/wholesale"
+          enctype="multipart/form-data" method="post">
+        <p>
+            모델 파일을 고르시오:<br>
+            <input type="file" name="model-file" size="3000000">
+        </p>
+        <p>
+            도매전화주문 자료와 고르시오:<br>
+            <input type="file" name="wholesale-file" size="3000000">
+        </p>
+        <div>
+            <input type="submit" value="Send">
+        </div>
+    </form>
 </body>
 </html>
