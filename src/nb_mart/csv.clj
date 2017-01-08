@@ -39,16 +39,17 @@
 
 ;; To deal with Sabangnet download
 (def freebies-matcher #".*\(사은품\).*")
-(def eng-and-num-matcher #"[a-zA-Z]+[0-9]+\w*")
+(def model-name-matcher #"[0-9]*[a-zA-Z_\-]+[0-9_\-]+[a-zA-Z0-9_\-]*(\/?\w*)*")
 (defn string->model-name [string]
-  "Returns model name that is of english and then numbers,
+  "Returns model name that matches the model pattern,
   if not found '(사은품)?만원이상' is the model name.
-  The split is there to cutoff the part after space(' gumae'"
+  The split is there to cutoff the part after space('구매' part)"
   (or (if-let [match-string (re-matches freebies-matcher string)]
         (-> match-string
             (.split " ")
             first))
-      (re-find eng-and-num-matcher string)))
+      (-> (re-find model-name-matcher string)
+          first)))
 (defn row->model-name [vec-string]
   (some string->model-name vec-string))
 (defn insert-model-names-from-csv-file [csv-file-path]

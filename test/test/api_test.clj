@@ -23,7 +23,7 @@
     they match with either english + number model scheme or contains 사은품,
     except the first"
     (rest (csv/insert-model-names-from-csv-file "test/sabang.csv"))
-    => (has every? #(or (re-find csv/eng-and-num-matcher (% 0))
+    => (has every? #(or (re-find csv/model-name-matcher (% 0))
                         (re-matches csv/freebies-matcher (% 0)))))
   (fact
     "After inserting partner names, there are 12 columns for each row"
