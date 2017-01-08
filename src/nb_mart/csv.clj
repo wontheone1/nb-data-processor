@@ -12,18 +12,24 @@
     (if (.startsWith file-content bom)
       (csv/read-csv (.substring file-content 1) :separator \;)
       (csv/read-csv file-content :separator \;))))
-(defn create-temp-file! [prefix suffix]
-  (let [file (doto (File/createTempFile prefix suffix)
-               .deleteOnExit)]
-    ; TODO: log file path
-    (.getCanonicalPath file)))
+(defn create-temp-file!
+  ([prefix suffix]
+   (let [file (doto (File/createTempFile prefix suffix)
+                .deleteOnExit)]
+     ; TODO: log file path
+     (.getCanonicalPath file)))
+  ([content]
+   (let [file (doto (File/createTempFile "input-" ".csv")
+                .deleteOnExit)]
+     (io/copy content file)
+     (.getCanonicalPath file))))
 (defn write-processed-data-to-file! [processed-data]
-  (let [temp-file-path (create-temp-file! "nb-" ".csv")
+  (let [temp-file-path (create-temp-file! "output-" ".csv")
         bom            "\uFEFF"]
     (with-open [out-file (io/writer temp-file-path)]
       (.write out-file bom)
-      (csv/write-csv out-file processed-data :separator \;))
-    temp-file-path))
+      (csv/write-csv out-file processed-data :separator \;)
+      (io/file temp-file-path))))
 
 ;; To map models and partners
 (defn read-model->partner [file-path]
@@ -52,18 +58,24 @@
       (if (blank? (a-row 0))
         (assoc a-row 0 (row->model-name a-row))
         a-row))))
-(defn insert-partner-names [sabang-net-data model->partner]
+(defn insert-partner-names [model->partner sabang-net-data]
   "Decide partner names based on model names,
   insert the partner names in the first column"
   (for [a-row sabang-net-data]
     (let [model-name (a-row 0)
           partner-name (model->partner model-name)]
       (concat [partner-name] a-row))))
-(defn process-sabang-data [sabang-data-file-path model-partner-file-path]
+(defn process-sabang-data [model-partner-file-path sabang-data-file-path]
   "Process data from sabangnet, write to a file, return the file path"
   (let [model->partner (read-model->partner model-partner-file-path)
         sabang-data    (insert-model-names-from-csv-file sabang-data-file-path)]
-    (insert-partner-names sabang-data model->partner)))
-(defn generate-processed-csv [sabang-data-file-path model-partner-file-path]
-  (-> (process-sabang-data sabang-data-file-path model-partner-file-path)
+    (insert-partner-names model->partner sabang-data)))
+(defn generate-processed-csv! [model-partner-file-path sabang-data-file-path]
+  (-> (process-sabang-data model-partner-file-path sabang-data-file-path)
       (write-processed-data-to-file!)))
+
+;; To deal with file uploads
+(defn file-uploads-then-return-result! [model-file sabang-file]
+  (let [model-file-path  (create-temp-file! model-file)
+        sabang-file-path (create-temp-file! sabang-file)]
+    (generate-processed-csv! model-file-path sabang-file-path)))

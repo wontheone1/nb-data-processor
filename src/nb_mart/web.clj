@@ -6,17 +6,29 @@
             [ring.adapter.jetty :as jetty]
             [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
             [ring.middleware.reload :refer [wrap-reload]]
+            [ring.middleware.multipart-params :refer :all]
+            [ring.middleware.params :refer :all]
             [environ.core :refer [env]]
-            [clojure.data.csv :as csv]))
+            [clojure.data.csv :as csv]
+            [nb-mart.csv :as nb-csv]))
 
 (defroutes app-routes
            (GET "/" []
              (slurp (io/resource "index.html")))
+           (POST "/data" request
+             {:status 200
+              :headers {"Content-Type" "application/octet-stream"
+                        "Content-Disposition" "attachment;filename=\\\"result.txt\\\""}}
+              :body (nb-csv/file-uploads-then-return-result!
+                      (get-in request [:params :model-file :tempfile])
+                      (get-in request [:params :sabang-file :tempfile])))
            (ANY "*" []
              (route/not-found (slurp (io/resource "404.html")))))
 
 (def app
-  (wrap-defaults app-routes site-defaults))
+  (-> app-routes
+      wrap-params
+      wrap-multipart-params))
 
 (def reloadable-app
   (try (wrap-reload app)
