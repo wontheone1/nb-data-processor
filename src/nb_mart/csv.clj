@@ -31,6 +31,7 @@
 (defn write-processed-data-to-file! [processed-data]
   (let [temp-file-path (create-temp-file! "output-" ".csv")
         bom            "\uFEFF"]
+    (println (format "Tempfile created at \n%s" temp-file-path))
     (with-open [out-file (io/writer temp-file-path)]
       (.write out-file bom)
       (csv/write-csv out-file processed-data :separator \;)
@@ -107,12 +108,14 @@
   (let [model->partner (read-model->partner model-partner-file-path)
         sabang-data    (insert-model-names-from-csv-file sabang-data-file-path)]
     (insert-partner-names model->partner sabang-data)))
-(defn generate-processed-csv! [model-partner-file-path sabang-data-file-path]
-  (-> (process-sabang-data model-partner-file-path sabang-data-file-path)
-      (write-processed-data-to-file!)))
+(defn generate-processed-csv! [model-partner-file-path data-file-path data-type]
+  (-> (case data-type
+        :sabangnet (process-sabang-data model-partner-file-path data-file-path)
+        :whole-sale (insert-standardized-model-names model-partner-file-path data-file-path))
+      write-processed-data-to-file!))
 
 ;; To deal with file uploads
-(defn file-uploads-then-return-result! [model-file sabang-file]
+(defn file-uploads-then-return-result! [model-file data-csv-file data-type]
   (let [model-file-path  (create-temp-file! model-file)
-        sabang-file-path (create-temp-file! sabang-file)]
-    (generate-processed-csv! model-file-path sabang-file-path)))
+        data-csv-file-path (create-temp-file! data-csv-file)]
+    (generate-processed-csv! model-file-path data-csv-file-path data-type)))
