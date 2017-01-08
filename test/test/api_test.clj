@@ -27,5 +27,5 @@
                         (re-matches csv/freebies-matcher (% 0)))))
   (fact
     "After inserting partner names, there are 12 columns for each row"
-    (csv/process-sabang-data "test/sabang.csv" "test/mtop.csv")
+    (csv/process-sabang-data "test/mtop.csv" "test/sabang.csv")
     => (has every? #(= (count %) 12))))
