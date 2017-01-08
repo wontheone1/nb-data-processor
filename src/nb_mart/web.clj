@@ -15,13 +15,22 @@
 (defroutes app-routes
            (GET "/" []
              (slurp (io/resource "index.html")))
-           (POST "/data" request
+           (POST "/sabang" request
              {:status 200
               :headers {"Content-Type" "application/octet-stream"
-                        "Content-Disposition" "attachment;filename=\\\"result.txt\\\""}}
+                        "Content-Disposition" "attachment;filename=\\\"sabang.txt\\\""}}
               :body (nb-csv/file-uploads-then-return-result!
                       (get-in request [:params :model-file :tempfile])
-                      (get-in request [:params :sabang-file :tempfile])))
+                      (get-in request [:params :sabang-file :tempfile])
+                      :sabangnet))
+           (POST "/wholesale" request
+             {:status 200
+              :headers {"Content-Type" "application/octet-stream"
+                        "Content-Disposition" "attachment;filename=\\\"wholesale.txt\\\""}}
+             :body (nb-csv/file-uploads-then-return-result!
+                     (get-in request [:params :model-file :tempfile])
+                     (get-in request [:params :wholesale-file :tempfile])
+                     :whole-sale))
            (ANY "*" []
              (route/not-found (slurp (io/resource "404.html")))))
 
