@@ -27,6 +27,7 @@
                           :repl-options {:init-ns user
                                          :init    (do (println "here we are in" *ns*)
                                                       (use 'nb-mart.web)
-                                                      (use 'nb-mart.csv))}
+                                                      (use 'nb-mart.csv)
+                                                      (def server (-main)))}
                           :source-paths ["dev"]
                           }})
