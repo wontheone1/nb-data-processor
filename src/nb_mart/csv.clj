@@ -15,8 +15,8 @@
   (let [file-content (slurp file-path)
         bom          "\uFEFF"]
     (if (.startsWith file-content bom)
-      (csv/read-csv (.substring file-content 1) :separator \;)
-      (csv/read-csv file-content :separator \;))))
+      (csv/read-csv (.substring file-content 1))
+      (csv/read-csv file-content))))
 (defn create-temp-file!
   ([prefix suffix]
    (let [file (doto (File/createTempFile prefix suffix)
@@ -34,7 +34,7 @@
     (println (format "Tempfile created at \n%s" temp-file-path))
     (with-open [out-file (io/writer temp-file-path)]
       (.write out-file bom)
-      (csv/write-csv out-file processed-data :separator \;)
+      (csv/write-csv out-file processed-data)
       (io/file temp-file-path))))
 
 ;; To map models and partners
