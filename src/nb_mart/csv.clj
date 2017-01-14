@@ -94,7 +94,7 @@
   (let [sabang-net-data (read-csv-without-bom sabang-file-path)]
     (for [a-row sabang-net-data]
       (if (blank? (a-row 0))
-        (assoc a-row 0 (row->model-name a-row))
+        (assoc a-row 0 (row->model-name [(a-row 3) (a-row 1)]))
         a-row))))
 (defn insert-partner-names [model->partner sabang-net-data]
   "Decide partner names based on model names,
