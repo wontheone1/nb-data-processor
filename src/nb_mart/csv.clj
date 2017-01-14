@@ -76,7 +76,11 @@
 
 ;; To deal with Sabangnet download
 (def freebies-matcher #".*\(사은품\).*")
-(def model-name-matcher #"[0-9]*[a-zA-Z_\-]+[0-9_\-]+[a-zA-Z0-9_\-]*(\/?\w*)*")
+(def eng-num-dash-matcher #"[a-zA-Z-]+[0-9]+[a-zA-Z0-9]+(\/[a-zA-Z-]+[0-9]+[a-zA-Z0-9]+)*")
+(def eng-num-space-matcher #"[a-zA-Z]+ ?[0-9]+(\/[a-zA-Z]+ ?[0-9]+)*")
+;(def model-name-matcher #"[0-9a-zA-Z]*[a-zA-Z]+(_|-|[0-9]+)*[-a-zA-Z ]*[0-9]+( [0-9]+)?(\/[0-9a-zA-Z]*[a-zA-Z]+(_- [0-9]+)*[a-zA-Z]*[0-9]+)*")
+(def all-caps-model-name-matcher #"[A-Z]{4,}")
+(def hangeul-matcher #"[가-힣]{2,} ?-?_?[0-9]+[a-zA-Z]*")
 (defn string->model-name [string]
   "Returns model name that matches the model pattern,
   if not found '(사은품)?만원이상' is the model name.
@@ -85,16 +89,18 @@
         (-> match-string
             (split #" ")
             first))
-      (-> (re-find model-name-matcher string)
-          first)))
-(defn row->model-name [vec-string]
-  (some string->model-name vec-string))
+      (-> (re-find eng-num-dash-matcher string)
+          first)
+      (-> (re-find eng-num-space-matcher string)
+          first)
+      (re-find all-caps-model-name-matcher string)
+      (re-find hangeul-matcher string)))
 (defn insert-model-names-from-csv-file [sabang-file-path]
   "Returns a lazy sequence of vectors with model names as the first element"
   (let [sabang-net-data (read-csv-without-bom sabang-file-path)]
     (for [a-row sabang-net-data]
       (if (blank? (a-row 0))
-        (assoc a-row 0 (row->model-name [(a-row 3) (a-row 1)]))
+        (assoc a-row 0 (string->model-name (str (a-row 3) " " (a-row 1))))
         a-row))))
 (defn insert-partner-names [model->partner sabang-net-data]
   "Decide partner names based on model names,
