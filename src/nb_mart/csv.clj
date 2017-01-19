@@ -75,12 +75,13 @@
           (vec-insert a-row 1 standard-name))))))
 
 ;; To deal with Sabangnet download
-(def freebies-matcher #".*\(사은품\).*")
 (def eng-num-dash-matcher #"[a-zA-Z-]+[0-9]+[a-zA-Z0-9]+(\/[a-zA-Z-]+[0-9]+[a-zA-Z0-9]+)*")
 (def eng-num-space-matcher #"[a-zA-Z]+ ?[0-9]+(\/[a-zA-Z]+ ?[0-9]+)*")
-;(def model-name-matcher #"[0-9a-zA-Z]*[a-zA-Z]+(_|-|[0-9]+)*[-a-zA-Z ]*[0-9]+( [0-9]+)?(\/[0-9a-zA-Z]*[a-zA-Z]+(_- [0-9]+)*[a-zA-Z]*[0-9]+)*")
+(def freebies-matcher #".*\(사은품\).*")
 (def all-caps-model-name-matcher #"[A-Z]{4,}")
 (def hangeul-matcher #"[가-힣]{2,} ?-?_?[0-9]+[a-zA-Z]*")
+;(def model-name-matcher #"[0-9a-zA-Z]*[a-zA-Z]+(_|-|[0-9]+)*[-a-zA-Z ]*[0-9]+( [0-9]+)?(\/[0-9a-zA-Z]*[a-zA-Z]+(_- [0-9]+)*[a-zA-Z]*[0-9]+)*")
+
 (defn string->model-name [string]
   "Returns model name that matches the model pattern,
   if not found '(사은품)?만원이상' is the model name.
