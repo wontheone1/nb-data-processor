@@ -15,8 +15,8 @@
   (let [file-content (slurp file-path)
         bom          "\uFEFF"]
     (if (.startsWith file-content bom)
-      (csv/read-csv (.substring file-content 1))
-      (csv/read-csv file-content))))
+      (csv/read-csv (.substring file-content 1) :separator \;)
+      (csv/read-csv file-content :separator \;))))
 (defn create-temp-file!
   ([prefix suffix]
    (let [file (doto (File/createTempFile prefix suffix)
@@ -34,7 +34,7 @@
     (println (format "Tempfile created at \n%s" temp-file-path))
     (with-open [out-file (io/writer temp-file-path)]
       (.write out-file bom)
-      (csv/write-csv out-file processed-data)
+      (csv/write-csv out-file processed-data :separator \;)
       (io/file temp-file-path))))
 
 ;; To map models and partners
@@ -75,7 +75,7 @@
           (vec-insert a-row 1 standard-name))))))
 
 ;; To deal with Sabangnet download
-(def eng-num-dash-matcher #"[a-zA-Z-]+[0-9]+[a-zA-Z0-9]+(\/[a-zA-Z-]+[0-9]+[a-zA-Z0-9]+)*")
+(def eng-num-dash-matcher #"[0-9]*[a-zA-Z-]+[0-9]+[a-zA-Z0-9]+(\/[a-zA-Z-]+[0-9]+[a-zA-Z0-9]+)*")
 (def eng-num-space-matcher #"[a-zA-Z]+ ?[0-9]+(\/[a-zA-Z]+ ?[0-9]+)*")
 (def freebies-matcher #".*\(사은품\).*")
 (def all-caps-model-name-matcher #"[A-Z]{4,}")
