@@ -75,7 +75,7 @@
           (vec-insert a-row 1 standard-name))))))
 
 ;; To deal with Sabangnet download
-(def eng-num-dash-matcher #"[0-9]*[a-zA-Z-]+[0-9]+[a-zA-Z0-9]+(\/[a-zA-Z-]+[0-9]+[a-zA-Z0-9]+)*")
+(def eng-num-dash-matcher #"[0-9]*[a-zA-Z]+-?[0-9]+[a-zA-Z0-9-]+(\/[0-9]*[a-zA-Z]*-?[0-9]+[a-zA-Z0-9-]+)*")
 (def eng-num-space-matcher #"[a-zA-Z]+ ?[0-9]+(\/[a-zA-Z]+ ?[0-9]+)*")
 (def freebies-matcher #".*\(사은품\).*")
 (def all-caps-model-name-matcher #"[A-Z]{4,}")
