@@ -2,7 +2,8 @@
   (:require [clojure.data.csv :as csv]
             [clojure.string :refer [blank? starts-with? split]]
             [clojure.java.io :as io]
-            [nb-mart.matcher :as nm])
+            [nb-mart.matcher :as nm]
+            [nb-mart.file-io :as nio])
   (:import (java.io File)))
 
 ;; Util functions
@@ -10,44 +11,11 @@
   "insert elem in coll at pos"
   [coll pos elem]
   (concat (subvec coll 0 pos) [elem] (subvec coll pos)))
-(defn read-csv-without-bom
-  "If Byte order mark (BOM) is the first char in the file,
-  take the rest of the string except BOM"
-  ([file-path]
-    (read-csv-without-bom file-path \;))
-  ([file-path separator]
-    (let [file-content (slurp file-path)
-          bom          "\uFEFF"]
-      (if (.startsWith file-content bom)
-        (csv/read-csv (.substring file-content 1) :separator separator)
-        (csv/read-csv file-content :separator separator)))))
-(defn create-temp-file!
-  ([prefix suffix]
-   (let [file (doto (File/createTempFile prefix suffix)
-                .deleteOnExit)]
-     ; TODO: log file path
-     (.getCanonicalPath file)))
-  ([content]
-   (let [file (doto (File/createTempFile "input-" ".csv")
-                .deleteOnExit)]
-     (io/copy content file)
-     (.getCanonicalPath file))))
-(defn write-processed-data-to-file!
-  ([processed-data]
-    write-processed-data-to-file! processed-data \;)
-  ([processed-data separator]
-    (let [temp-file-path (create-temp-file! "output-" ".csv")
-          bom "\uFEFF"]
-      (println (format "Tempfile created at \n%s" temp-file-path))
-      (with-open [out-file (io/writer temp-file-path)]
-        (.write out-file bom)
-        (csv/write-csv out-file processed-data :separator separator)
-        (io/file temp-file-path)))))
 
 ;; To map models and partners
 (defn read-model->partner [model-file-path]
   "Returns a map whose key is model names and value is partner names"
-  (let [vectors-of-model->patner (read-csv-without-bom model-file-path)]
+  (let [vectors-of-model->patner (nio/read-csv-without-bom model-file-path)]
     (reduce #(into %1 {(%2 0) (%2 1)}) {} vectors-of-model->patner)))
 
 ;; To standardize unstandardized names in wholesale order file(도매전화주문)
@@ -65,14 +33,14 @@
               name)))))
 (defn read-standard-model-names [model-file-path]
   "Returns a map whose key is model names and value is partner names"
-  (let [vectors-of-model->patner (read-csv-without-bom model-file-path)]
+  (let [vectors-of-model->patner (nio/read-csv-without-bom model-file-path)]
     (->> (map #(normalize-multi-model-name (% 0)) vectors-of-model->patner)
          (apply concat)
          (sort-by count >))))
 (defn lookup-standard-name [standard-names non-standard-name]
   (some #(if (.startsWith non-standard-name %) %) standard-names))
 (defn insert-standardized-model-names [model-file-path whole-sale-order-file-path separator]
-  (let [whole-sale-data (read-csv-without-bom whole-sale-order-file-path separator)]
+  (let [whole-sale-data (nio/read-csv-without-bom whole-sale-order-file-path separator)]
     (for [a-row whole-sale-data]
       (let [standard-names    (read-standard-model-names model-file-path)
             standard-name     (or (lookup-standard-name standard-names (a-row 2))
@@ -82,7 +50,6 @@
           (vec-insert a-row 1 standard-name))))))
 
 ;; To deal with Sabangnet download
-
 (defn- remove-dash-when-eng-dash-eng?num [string]
   (when string
     (if (re-find #"[a-zA-Z]+-[0-9]+(\/[a-zA-Z]*-?[0-9]+)*" string)
@@ -113,7 +80,7 @@
       (re-find nm/hangeul-matcher string)))
 (defn insert-model-names-from-csv-file [sabang-file-path separator]
   "Returns a lazy sequence of vectors with model names as the first element"
-  (let [sabang-net-data (read-csv-without-bom sabang-file-path separator)]
+  (let [sabang-net-data (nio/read-csv-without-bom sabang-file-path separator)]
     (for [a-row sabang-net-data]
       (if (blank? (a-row 0))
         (assoc a-row 0 (string->model-name (str (a-row 1) " " (a-row 3))))
@@ -134,10 +101,10 @@
   (-> (case data-type
         :sabangnet (process-sabang-data model-partner-file-path data-file-path separator)
         :whole-sale (insert-standardized-model-names model-partner-file-path data-file-path separator))
-      (write-processed-data-to-file! separator)))
+      (nio/write-processed-data-to-file! separator)))
 
 ;; To deal with file uploads
 (defn file-uploads-then-return-result! [model-file data-csv-file data-type separator]
-  (let [model-file-path  (create-temp-file! model-file)
-        data-csv-file-path (create-temp-file! data-csv-file)]
+  (let [model-file-path  (nio/create-temp-file! model-file)
+        data-csv-file-path (nio/create-temp-file! data-csv-file)]
     (generate-processed-csv! model-file-path data-csv-file-path data-type (first (char-array separator)))))
