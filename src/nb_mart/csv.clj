@@ -95,7 +95,8 @@
       (clojure.string/replace string "-" "")
       string)))
 (defn- remove-space-bar [string]
-  (clojure.string/replace string " " ""))
+  (when string
+    (clojure.string/replace string " " "")))
 
 (defn string->model-name [string]
   "Returns model name that matches the model pattern,
