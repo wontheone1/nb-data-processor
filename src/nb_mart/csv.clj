@@ -9,14 +9,17 @@
   "insert elem in coll at pos"
   [coll pos elem]
   (concat (subvec coll 0 pos) [elem] (subvec coll pos)))
-(defn read-csv-without-bom [file-path]
+(defn read-csv-without-bom
   "If Byte order mark (BOM) is the first char in the file,
   take the rest of the string except BOM"
-  (let [file-content (slurp file-path)
-        bom          "\uFEFF"]
-    (if (.startsWith file-content bom)
-      (csv/read-csv (.substring file-content 1) :separator \;)
-      (csv/read-csv file-content :separator \;))))
+  ([file-path]
+    (read-csv-without-bom file-path \;))
+  ([file-path separator]
+    (let [file-content (slurp file-path)
+          bom          "\uFEFF"]
+      (if (.startsWith file-content bom)
+        (csv/read-csv (.substring file-content 1) :separator separator)
+        (csv/read-csv file-content :separator separator)))))
 (defn create-temp-file!
   ([prefix suffix]
    (let [file (doto (File/createTempFile prefix suffix)
@@ -28,14 +31,17 @@
                 .deleteOnExit)]
      (io/copy content file)
      (.getCanonicalPath file))))
-(defn write-processed-data-to-file! [processed-data]
-  (let [temp-file-path (create-temp-file! "output-" ".csv")
-        bom            "\uFEFF"]
-    (println (format "Tempfile created at \n%s" temp-file-path))
-    (with-open [out-file (io/writer temp-file-path)]
-      (.write out-file bom)
-      (csv/write-csv out-file processed-data :separator \;)
-      (io/file temp-file-path))))
+(defn write-processed-data-to-file!
+  ([processed-data]
+    write-processed-data-to-file! processed-data \;)
+  ([processed-data separator]
+    (let [temp-file-path (create-temp-file! "output-" ".csv")
+          bom "\uFEFF"]
+      (println (format "Tempfile created at \n%s" temp-file-path))
+      (with-open [out-file (io/writer temp-file-path)]
+        (.write out-file bom)
+        (csv/write-csv out-file processed-data :separator separator)
+        (io/file temp-file-path)))))
 
 ;; To map models and partners
 (defn read-model->partner [model-file-path]
