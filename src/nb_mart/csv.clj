@@ -1,7 +1,8 @@
 (ns nb-mart.csv
   (:require [clojure.data.csv :as csv]
             [clojure.string :refer [blank? starts-with? split]]
-            [clojure.java.io :as io])
+            [clojure.java.io :as io]
+            [nb-mart.matcher :as nm])
   (:import (java.io File)))
 
 ;; Util functions
@@ -81,13 +82,6 @@
           (vec-insert a-row 1 standard-name))))))
 
 ;; To deal with Sabangnet download
-(def chumy-underscore-model-name-matcher #"[A-Z0-9]+_[0-9]+")
-(def byc-eng-num-slash-only-matcher #"BY[a-zA-Z]*[0-9]+(\/[0-9]+)*")
-(def eng-num-dash-matcher #"[0-9]*[a-zA-Z]{2,}-?[0-9]+[a-zA-Z0-9-]+(\/[0-9]*[a-zA-Z]*-?[0-9]+[a-zA-Z0-9-]+)*")
-(def eng-num-space-matcher #"[a-zA-Z]+ ?[0-9]+[a-zA-Z0-9]*(\/[a-zA-Z]* ?[0-9]+[a-zA-Z0-9]*)*")
-(def freebies-matcher #".*\(사은품\).*")
-(def all-caps-model-name-matcher #"[A-Z]{4,}")
-(def hangeul-matcher #"[가-힣]{2,} ?-?_?[0-9]+[a-zA-Z]*")
 
 (defn- remove-dash-when-eng-dash-eng?num [string]
   (when string
@@ -102,21 +96,21 @@
   "Returns model name that matches the model pattern,
   if not found '(사은품)?만원이상' is the model name.
   The split is there to cutoff the part after space('구매' part)"
-  (or (re-find chumy-underscore-model-name-matcher string)
-      (if-let [match-string (re-matches freebies-matcher string)]
+  (or (re-find nm/chumy-underscore-model-name-matcher string)
+      (if-let [match-string (re-matches nm/freebies-matcher string)]
         (-> match-string
             (split #" ")
             first))
-      (-> (re-find byc-eng-num-slash-only-matcher string)
+      (-> (re-find nm/byc-eng-num-slash-only-matcher string)
           first)
-      (-> (re-find eng-num-dash-matcher string)
+      (-> (re-find nm/eng-num-dash-matcher string)
           first
           remove-dash-when-eng-dash-eng?num)
-      (-> (re-find eng-num-space-matcher string)
+      (-> (re-find nm/eng-num-space-matcher string)
           first
           remove-space-bar)
-      (re-find all-caps-model-name-matcher string)
-      (re-find hangeul-matcher string)))
+      (re-find nm/all-caps-model-name-matcher string)
+      (re-find nm/hangeul-matcher string)))
 (defn insert-model-names-from-csv-file [sabang-file-path separator]
   "Returns a lazy sequence of vectors with model names as the first element"
   (let [sabang-net-data (read-csv-without-bom sabang-file-path separator)]
