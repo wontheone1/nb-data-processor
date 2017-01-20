@@ -22,7 +22,8 @@
               :body (nb-csv/file-uploads-then-return-result!
                       (get-in request [:params :model-file :tempfile])
                       (get-in request [:params :sabang-file :tempfile])
-                      :sabangnet))
+                      :sabangnet
+                      (get-in request [:params :separator])))
            (POST "/wholesale" request
              {:status 200
               :headers {"Content-Type" "application/octet-stream"
@@ -30,7 +31,8 @@
              :body (nb-csv/file-uploads-then-return-result!
                      (get-in request [:params :model-file :tempfile])
                      (get-in request [:params :wholesale-file :tempfile])
-                     :whole-sale))
+                     :whole-sale
+                     (get-in request [:params :separator])))
            (ANY "*" []
              (route/not-found (slurp (io/resource "404.html")))))
 
