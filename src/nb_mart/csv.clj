@@ -31,30 +31,24 @@
             (if (re-find #"^[\d]+" name)
               (str first-eng-part name)
               name)))))
+
 (defn read-standard-model-names [model-file-path]
   "Returns a map whose key is model names and value is partner names"
   (let [vectors-of-model->patner (nio/read-csv-without-bom model-file-path)]
     (->> (map #(normalize-multi-model-name (% 0)) vectors-of-model->patner)
          (apply concat)
          (sort-by count >))))
-(defn lookup-standard-name [standard-names non-standard-name]
-  (some #(if (.startsWith non-standard-name %) %) standard-names))
-(defn insert-standardized-model-names [model-file-path whole-sale-order-file-path separator]
-  (let [whole-sale-data (nio/read-csv-without-bom whole-sale-order-file-path separator)]
-    (for [a-row whole-sale-data]
-      (let [standard-names    (read-standard-model-names model-file-path)
-            standard-name     (or (lookup-standard-name standard-names (a-row 2))
-                                  (lookup-standard-name standard-names (a-row 1)))]
-        (if (blank? standard-name)
-          (vec-insert a-row 1 "")
-          (vec-insert a-row 1 standard-name))))))
 
-;; To deal with Sabangnet download
+(defn lookup-standard-name [standard-names non-standard-name]
+  (when non-standard-name
+    (some #(if (.startsWith non-standard-name %) %) standard-names)))
+
 (defn- remove-dash-when-eng-dash-eng?num [string]
   (when string
     (if (re-find #"[a-zA-Z]+-[0-9]+(\/[a-zA-Z]*-?[0-9]+)*" string)
       (clojure.string/replace string "-" "")
       string)))
+
 (defn- remove-space-bar [string]
   (when string
     (clojure.string/replace string " " "")))
@@ -78,6 +72,19 @@
           remove-space-bar)
       (re-find nm/all-caps-model-name-matcher string)
       (re-find nm/hangeul-matcher string)))
+
+(defn insert-standardized-model-names [model-file-path whole-sale-order-file-path separator]
+  (let [whole-sale-data (nio/read-csv-without-bom whole-sale-order-file-path separator)]
+    (for [a-row whole-sale-data]
+      (let [standard-names (read-standard-model-names model-file-path)
+            name-and-size  (string->model-name (a-row 2))
+            standard-name  (or (lookup-standard-name standard-names name-and-size)
+                                  (lookup-standard-name standard-names (a-row 1)))]
+        (if (blank? standard-name)
+          (vec-insert a-row 1 "")
+          (vec-insert a-row 1 standard-name))))))
+
+;; To deal with Sabangnet download
 (defn insert-model-names-from-csv-file [sabang-file-path separator]
   "Returns a lazy sequence of vectors with model names as the first element"
   (let [sabang-net-data (nio/read-csv-without-bom sabang-file-path separator)]
@@ -85,6 +92,7 @@
       (if (blank? (a-row 0))
         (assoc a-row 0 (string->model-name (str (a-row 1) " " (a-row 3))))
         a-row))))
+
 (defn insert-partner-names [model->partner sabang-net-data]
   "Decide partner names based on model names,
   insert the partner names in the first column"
@@ -92,11 +100,13 @@
     (let [model-name (a-row 0)
           partner-name (model->partner model-name)]
       (concat [partner-name] a-row))))
+
 (defn process-sabang-data [model-partner-file-path sabang-data-file-path separator]
   "Process data from sabangnet, write to a file, return the file path"
   (let [model->partner (read-model->partner model-partner-file-path)
         sabang-data    (insert-model-names-from-csv-file sabang-data-file-path separator)]
     (insert-partner-names model->partner sabang-data)))
+
 (defn generate-processed-csv! [model-partner-file-path data-file-path data-type separator]
   (-> (case data-type
         :sabangnet (process-sabang-data model-partner-file-path data-file-path separator)
