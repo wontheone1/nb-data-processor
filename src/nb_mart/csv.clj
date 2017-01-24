@@ -13,9 +13,9 @@
   (concat (subvec coll 0 pos) [elem] (subvec coll pos)))
 
 ;; To map models and partners
-(defn read-model->partner [model-file-path]
+(defn read-model->partner [model-file-path separator]
   "Returns a map whose key is model names and value is partner names"
-  (let [vectors-of-model->patner (nio/read-csv-without-bom model-file-path)]
+  (let [vectors-of-model->patner (nio/read-csv-without-bom model-file-path separator)]
     (reduce #(into %1 {(%2 0) (%2 1)}) {} vectors-of-model->patner)))
 
 ;; To standardize unstandardized names in wholesale order file(도매전화주문)
@@ -32,9 +32,9 @@
               (str first-eng-part name)
               name)))))
 
-(defn read-standard-model-names [model-file-path]
+(defn read-standard-model-names [model-file-path separator]
   "Returns a map whose key is model names and value is partner names"
-  (let [vectors-of-model->patner (nio/read-csv-without-bom model-file-path)]
+  (let [vectors-of-model->patner (nio/read-csv-without-bom model-file-path separator)]
     (->> (map #(normalize-multi-model-name (% 0)) vectors-of-model->patner)
          (apply concat)
          (sort-by count >))))
@@ -76,7 +76,7 @@
 (defn insert-standardized-model-names [model-file-path whole-sale-order-file-path separator]
   (let [whole-sale-data (nio/read-csv-without-bom whole-sale-order-file-path separator)]
     (for [a-row whole-sale-data]
-      (let [standard-names (read-standard-model-names model-file-path)
+      (let [standard-names (read-standard-model-names model-file-path separator)
             name-and-size  (string->model-name (a-row 2))
             standard-name  (or (lookup-standard-name standard-names name-and-size)
                                   (lookup-standard-name standard-names (a-row 1)))]
@@ -103,7 +103,7 @@
 
 (defn process-sabang-data [model-partner-file-path sabang-data-file-path separator]
   "Process data from sabangnet, write to a file, return the file path"
-  (let [model->partner (read-model->partner model-partner-file-path)
+  (let [model->partner (read-model->partner model-partner-file-path separator)
         sabang-data    (insert-model-names-from-csv-file sabang-data-file-path separator)]
     (insert-partner-names model->partner sabang-data)))
 
@@ -117,4 +117,4 @@
 (defn file-uploads-then-return-result! [model-file data-csv-file data-type separator]
   (let [model-file-path  (nio/create-temp-file! model-file)
         data-csv-file-path (nio/create-temp-file! data-csv-file)]
-    (generate-processed-csv! model-file-path data-csv-file-path data-type (first (char-array separator)))))
+    (generate-processed-csv! model-file-path data-csv-file-path data-type separator)))
